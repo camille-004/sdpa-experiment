@@ -7,7 +7,7 @@ from sdpa.attention.scaled_dot_product import ScaledDotProductAttention
 class TestAttentionManager(unittest.TestCase):
     def setUp(self) -> None:
         self.manager = AttentionManager()
-        self.attention = ScaledDotProductAttention(d_model=4)
+        self.attention = ScaledDotProductAttention(d_k=4)
 
     def test_singleton(self) -> None:
         another_manager = AttentionManager()
@@ -28,10 +28,10 @@ class TestAttentionManager(unittest.TestCase):
 
     def test_get_nonexistent_attention(self) -> None:
         with self.assertRaises(KeyError):
-            return self.manager.get_attention("nonexistent")
+            self.manager.get_attention("nonexistent")
 
     def test_register_multiple_attentions(self) -> None:
-        attention2 = ScaledDotProductAttention(d_model=8)
+        attention2 = ScaledDotProductAttention(d_k=8)
         self.manager.register_attention("test1", self.attention)
         self.manager.register_attention("test2", attention2)
 

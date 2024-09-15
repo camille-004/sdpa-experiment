@@ -3,6 +3,7 @@ from sdpa.attention.base import BaseAttention
 
 class AttentionManager:
     _instance = None
+    attention_modules: dict[str, BaseAttention]
 
     def __new__(cls):
         if cls._instance is None:

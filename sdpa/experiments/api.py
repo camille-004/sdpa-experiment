@@ -7,7 +7,13 @@ import numpy as np
 from sdpa.experiments.config import load_config
 from sdpa.experiments.results_manager import ResultsManager
 from sdpa.experiments.runner import run_experiment
-from sdpa.visualization.heatmap import plot_attention_hm
+from sdpa.experiments.visualization import (
+    plot_attention_dist,
+    plot_attention_entropy,
+    plot_attention_focus_and_sparsity,
+    plot_attention_hm,
+    plot_attention_pca,
+)
 
 
 class API:
@@ -26,13 +32,32 @@ class API:
     def _visualize(
         self, results: list[dict[str, Any]], output_dir: Path
     ) -> None:
+        scales = []
+        all_weights = []
+        weight_dict = {}
         for result in results:
-            output_path = (
-                output_dir / f"attention_heatmap_scale_{result['scale']}.png"
-            )
+            scale = result["scale"]
+            weights = np.array(result["weights"]).squeeze(0)
+            scales.append(scale)
+            all_weights.append(weights)
+            output_base = output_dir / f"scale_{scale}"
+            weight_dict[scale] = weights
             plot_attention_hm(
-                result["weights"], result["scale"], str(output_path)
+                weights, scale, str(output_base) + "_heatmap.png"
             )
+
+        plot_attention_dist(
+            weight_dict, str(output_dir / "attention_distributions.png")
+        )
+        plot_attention_entropy(
+            all_weights, scales, str(output_dir / "attention_entropy.png")
+        )
+        plot_attention_focus_and_sparsity(
+            all_weights, scales, 0.01, str(output_dir / "attention_focus.png")
+        )
+        plot_attention_pca(
+            all_weights, scales, str(output_dir / "attention_pca.png")
+        )
 
     def _analyze(self, results: list[dict[str, Any]]) -> None:
         for result in results:

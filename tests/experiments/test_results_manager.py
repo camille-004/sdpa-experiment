@@ -14,8 +14,14 @@ class TestResultsManager(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_save_results(self) -> None:
-        results = [{"scale": 1.0, "weights": [[0.5, 0.5]]}]
-        config = {"batch_size": 1, "seq_length": 2}
+        results = [{"scale": 1.0, "weights": [[[0.5, 0.5]]]}]
+        config = {
+            "batch_size": 1,
+            "seq_length": 2,
+            "d_model": 8,
+            "num_heads": 2,
+            "scaling_factors": [0.1, 1.0],
+        }
 
         experiment_dir = self.results.save(results, config)
 
@@ -24,8 +30,14 @@ class TestResultsManager(unittest.TestCase):
         self.assertTrue((experiment_dir / "config.json").exists())
 
     def test_load_results(self) -> None:
-        results = [{"scale": 1.0, "weights": [[0.5, 0.5]]}]
-        config = {"batch_size": 1, "seq_length": 2}
+        results = [{"scale": 1.0, "weights": [[[0.5, 0.5]]]}]
+        config = {
+            "batch_size": 1,
+            "seq_length": 2,
+            "d_model": 8,
+            "num_heads": 2,
+            "scaling_factors": [0.1, 1.0],
+        }
         experiment_dir = self.results.save(results, config)
 
         data = self.results.load(experiment_dir.name)

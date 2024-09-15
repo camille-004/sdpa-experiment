@@ -1,23 +1,19 @@
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import NamedTuple, Protocol, TypedDict
 
 import numpy as np
 
 
 class AttentionProtocol(Protocol):
-    def compute(
+    def forward(
         self, query: np.ndarray, key: np.ndarray, value: np.ndarray
-    ) -> np.ndarray: ...
+    ) -> "AttentionOutput": ...
 
 
-class AttentionConfig(TypedDict):
+class AttentionConfig(TypedDict, total=False):
     d_model: int
+    d_k: int
     num_heads: int
-
-
-class AttentionType(Enum):
-    SCALED_DOT_PRODUCT = auto()
 
 
 AttentionOutput = NamedTuple(

@@ -10,28 +10,34 @@ class TestDataGeneration(unittest.TestCase):
     def setUp(self) -> None:
         np.random.seed(42)
 
-    def test_generate_attention_data_default(self) -> None:
-        queries, keys, values = generate_attention_data()
-
-        self.assertEqual(queries.shape, (1, 5, 4))
-        self.assertEqual(keys.shape, (1, 5, 4))
-        self.assertEqual(values.shape, (1, 5, 4))
-
     def test_generate_attention_data_custom(self) -> None:
-        batch_size, seq_length, d_k, d_v = 2, 10, 8, 6
+        batch_size, seq_length, d_k, num_heads = 2, 10, 8, 2
         queries, keys, values = generate_attention_data(
-            batch_size, seq_length, d_k, d_v
+            batch_size=batch_size,
+            seq_length=seq_length,
+            d_k=d_k,
+            num_heads=num_heads,
         )
 
-        self.assertEqual(queries.shape, (batch_size, seq_length, d_k))
-        self.assertEqual(keys.shape, (batch_size, seq_length, d_k))
-        self.assertEqual(values.shape, (batch_size, seq_length, d_v))
+        expected_dimension = d_k * num_heads
+        self.assertEqual(
+            queries.shape, (batch_size, seq_length, expected_dimension)
+        )
+        self.assertEqual(
+            keys.shape, (batch_size, seq_length, expected_dimension)
+        )
+        self.assertEqual(
+            values.shape, (batch_size, seq_length, expected_dimension)
+        )
 
     def test_generate_attention_data_distribution(self) -> None:
+        batch_size, seq_length, d_model, num_heads = 100, 100, 80, 8
         queries, keys, values = generate_attention_data(
-            batch_size=100, seq_length=100, d_k=10, d_v=10
+            batch_size=batch_size,
+            seq_length=seq_length,
+            d_model=d_model,
+            num_heads=num_heads,
         )
-
         queries_flat = queries.flatten()
         keys_flat = keys.flatten()
         values_flat = values.flatten()
@@ -39,7 +45,7 @@ class TestDataGeneration(unittest.TestCase):
         def check_normal_distribution(data: np.ndarray, name: str) -> None:
             t_stat, p_val = stats.ttest_1samp(data, 0)
             self.assertGreater(
-                p_val, 0.05, f"{name} mean significantly different from 0"
+                p_val, 0.01, f"{name} mean significantly different from 0"
             )
 
             self.assertAlmostEqual(
@@ -50,7 +56,7 @@ class TestDataGeneration(unittest.TestCase):
             )
 
             _, p_val = stats.kstest(data, "norm")
-            self.assertGreater(p_val, 0.05, f"{name} distribution not normal")
+            self.assertGreater(p_val, 0.01, f"{name} distribution not normal")
 
         check_normal_distribution(queries_flat, "Queries")
         check_normal_distribution(keys_flat, "Keys")

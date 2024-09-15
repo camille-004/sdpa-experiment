@@ -7,11 +7,10 @@ import yaml
 class ExperimentConfig:
     batch_size: int
     seq_length: int
-    d_model: int
-    d_k: int
-    d_v: int
-    num_heads: int
     scaling_factors: list[float]
+    d_k: int | None = None
+    d_model: int | None = None
+    num_heads: int | None = None
 
 
 def load_config(config_path: str) -> ExperimentConfig:
