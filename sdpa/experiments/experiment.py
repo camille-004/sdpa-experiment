@@ -14,18 +14,27 @@ from sdpa.experiments.visualization import (
     plot_attention_hm,
     plot_attention_pca,
 )
+from sdpa.utils.math_utils import (
+    calc_entropy,
+    calc_focus,
+    calc_pca,
+    calc_sparsity,
+    round_floats,
+)
 
 
-class API:
+class Experiment:
     def __init__(self, config_path: str) -> None:
         self.config = load_config(config_path)
         self.results = ResultsManager()
 
     def run(self) -> None:
         results = run_experiment(self.config)
-        experiment_dir = self.results.save(results, self.config.__dict__)
+        analysis_results = self._analyze(results)
+        experiment_dir = self.results.save(
+            results, self.config.__dict__, analysis_results
+        )
         self._visualize(results, experiment_dir)
-        self._analyze(results)
 
         print(f"Experiment results saved in: {experiment_dir}")
 
@@ -59,16 +68,42 @@ class API:
             all_weights, scales, str(output_dir / "attention_pca.png")
         )
 
-    def _analyze(self, results: list[dict[str, Any]]) -> None:
+    def _analyze(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        analysis_results = []
+
         for result in results:
             scale = result["scale"]
-            weights = result["weights"]
+            weights = np.array(result["weights"])
 
-            print(f"\nAnalysis for scale {scale}:")
-            print(f"Mean attention weight: {np.mean(weights):.4f}")
-            print(f"Max attention weight: {np.max(weights):.4f}")
-            print(f"Min attention weight: {np.min(weights):.4f}")
-            print(f"Standard deviation of weights: {np.std(weights):.4f}")
+            pca_result = calc_pca([weights])
+
+            analysis = {
+                "scale": scale,
+                "mean_attention_weight": round_floats(float(np.mean(weights))),
+                "max_attention_weight": round_floats(float(np.max(weights))),
+                "min_attention_weight": round_floats(float(np.min(weights))),
+                "std_attention_weight": round_floats(float(np.std(weights))),
+                "entropy": round_floats(calc_entropy(weights)),
+                "focus": round_floats(calc_focus(weights)),
+                "sparsity": round_floats(
+                    calc_sparsity(weights, threshold=0.01)
+                ),
+                "pca_first_component_std": round_floats(
+                    np.std(pca_result[1][:, 0])
+                ),
+                "pca_second_component_std": round_floats(
+                    np.std(pca_result[1][:, 1])
+                ),
+                "pca_first_component_variance_ratio": round_floats(
+                    pca_result[0].explained_variance_ratio_[0]
+                ),
+                "pca_second_component_variance_ratio": round_floats(
+                    pca_result[0].explained_variance_ratio_[1]
+                ),
+            }
+            analysis_results.append(analysis)
+
+        return analysis_results
 
     def load_experiment(self, experiment_name: str) -> None:
         data: dict[str, Any] = self.results.load(experiment_name)

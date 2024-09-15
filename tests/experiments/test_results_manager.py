@@ -21,13 +21,32 @@ class TestResultsManager(unittest.TestCase):
             "d_model": 8,
             "num_heads": 2,
             "scaling_factors": [0.1, 1.0],
+            "description": "Test experiment",
         }
+        analysis = [
+            {
+                "scale": 1.0,
+                "mean_attention_weight": 0.5,
+                "max_attention_weight": 0.5,
+                "min_attention_weight": 0.5,
+                "std_attention_weight": 0.0,
+                "entropy": 0.69314718,
+                "focus": 0.5,
+                "sparsity": 0.0,
+                "pca_first_component_std": 0.0,
+                "pca_second_component_std": 0.0,
+                "pca_first_component_variance_ratio": 0.0,
+                "pca_second_component_variance_ratio": 0.0,
+            }
+        ]
 
-        experiment_dir = self.results.save(results, config)
+        experiment_dir = self.results.save(results, config, analysis)
 
         self.assertTrue(experiment_dir.exists())
         self.assertTrue((experiment_dir / "results.json").exists())
         self.assertTrue((experiment_dir / "config.json").exists())
+        self.assertTrue((experiment_dir / "analysis.json").exists())
+        self.assertIn("Test_experiment", experiment_dir.name)
 
     def test_load_results(self) -> None:
         results = [{"scale": 1.0, "weights": [[[0.5, 0.5]]]}]
@@ -38,12 +57,29 @@ class TestResultsManager(unittest.TestCase):
             "num_heads": 2,
             "scaling_factors": [0.1, 1.0],
         }
-        experiment_dir = self.results.save(results, config)
+        analysis = [
+            {
+                "scale": 1.0,
+                "mean_attention_weight": 0.5,
+                "max_attention_weight": 0.5,
+                "min_attention_weight": 0.5,
+                "std_attention_weight": 0.0,
+                "entropy": 0.69314718,
+                "focus": 0.5,
+                "sparsity": 0.0,
+                "pca_first_component_std": 0.0,
+                "pca_second_component_std": 0.0,
+                "pca_first_component_variance_ratio": 0.0,
+                "pca_second_component_variance_ratio": 0.0,
+            }
+        ]
+        experiment_dir = self.results.save(results, config, analysis)
 
         data = self.results.load(experiment_dir.name)
 
         self.assertEqual(data["results"], results)
         self.assertEqual(data["config"], config)
+        self.assertEqual(data["analysis"], analysis)
 
     def test_list_experiments(self) -> None:
         (self.test_dir / "experiment_1").mkdir()

@@ -1,0 +1,5 @@
+description: "extreme_scale_factors"
+batch_size: 1
+seq_length: 10
+d_k: 64
+scaling_factors: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]

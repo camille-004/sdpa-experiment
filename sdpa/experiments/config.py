@@ -11,6 +11,7 @@ class ExperimentConfig:
     d_k: int | None = None
     d_model: int | None = None
     num_heads: int | None = None
+    description: str = ""
 
 
 def load_config(config_path: str) -> ExperimentConfig:

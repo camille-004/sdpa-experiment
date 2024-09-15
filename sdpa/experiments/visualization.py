@@ -4,8 +4,13 @@ import numpy as np
 import seaborn as sns  # type: ignore
 from matplotlib.patches import Polygon
 from scipy.spatial import ConvexHull
-from scipy.stats import entropy
-from sklearn.decomposition import PCA
+
+from sdpa.utils.math_utils import (
+    calc_entropy,
+    calc_focus,
+    calc_pca,
+    calc_sparsity,
+)
 
 CMAP = "coolwarm"
 
@@ -46,7 +51,7 @@ def plot_attention_dist(
 def plot_attention_entropy(
     weights: list[np.ndarray], scales: list[float], output_path: str
 ) -> None:
-    entropies = [entropy(w.flatten()) for w in weights]
+    entropies = [calc_entropy(w) for w in weights]
 
     max_entropies = [np.log(w.size) for w in weights]
     relative_entropies = [e / m for e, m in zip(entropies, max_entropies)]
@@ -62,7 +67,6 @@ def plot_attention_entropy(
         color=color,
         marker="o",
         linestyle="-",
-        label="Absolute Entropy",
     )
     ax1.tick_params(axis="y", labelcolor=color)
 
@@ -76,13 +80,12 @@ def plot_attention_entropy(
         color=color,
         marker="s",
         linestyle="-",
-        label="Relative Entropy",
     )
     ax2.tick_params(axis="y", labelcolor=color)
     ax2.set_ylim(0, 1)
 
     lines = line1 + line2
-    labels = [line.get_label() for line in lines]
+    labels = ["Absolute Entropy", "Relative Entropy"]
     ax1.legend(lines, labels, loc="lower left")
 
     plt.title("Attention Entropy vs Scale")
@@ -114,48 +117,9 @@ def plot_attention_entropy(
     plt.close()
 
 
-def plot_attention_focus(
-    weights: list[np.ndarray], scales: list[float], output_path: str
-) -> None:
-    focus_metrics = [np.max(w, axis=1).mean() for w in weights]
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(scales, focus_metrics, marker="o")
-    plt.title("Attention Focus vs Scale")
-    plt.xlabel("Scale")
-    plt.ylabel("Average Max Attention Weight")
-    plt.grid(True, linestyle="--", alpha=0.7)
-    plt.savefig(output_path)
-    plt.close()
-
-
-def plot_attention_sparsity(
-    weights: list[np.ndarray],
-    scales: list[float],
-    threshold: float,
-    output_path: str,
-) -> None:
-    sparsity_metrics = [(w < threshold).mean() for w in weights]
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(scales, sparsity_metrics, marker="o")
-    plt.title(f"Attention Sparsity vs Scale (threshold: {threshold})")
-    plt.xlabel("Scale")
-    plt.ylabel("Proportion of Weights < Threshold")
-    plt.ylim(0, 1)
-    plt.grid(True, linestyle="--", alpha=0.7)
-    plt.savefig(output_path)
-    plt.close()
-
-
 def plot_attention_pca(
     weights: list[np.ndarray], scales: list[float], output_path: str
 ) -> None:
-    pca = PCA(n_components=2)
-    pca_results = [
-        pca.fit_transform(w.reshape(w.shape[0], -1)) for w in weights
-    ]
-
     fig, ax = plt.subplots(figsize=(12, 8))
     fig.set_facecolor("white")
     ax.set_facecolor("#f0f0f0")
@@ -163,7 +127,8 @@ def plot_attention_pca(
     cmap = plt.get_cmap(CMAP)
     norm = mcolors.Normalize(vmin=min(scales), vmax=max(scales))
 
-    for i, result in enumerate(pca_results):
+    for i, result in enumerate(weights):
+        result = calc_pca([result])[1]
         color = cmap(norm(scales[i]))
 
         hull = ConvexHull(result)
@@ -199,7 +164,7 @@ def plot_attention_pca(
     sm.set_array([])
 
     cbar = plt.colorbar(sm, ax=ax, label="Scale")
-    cbar.set_ticks(np.linspace(min(scales), max(scales), 5))
+    cbar.set_ticks(list(np.linspace(min(scales), max(scales), 5)))
     cbar.set_ticklabels(
         [f"{scale:.2f}" for scale in np.linspace(min(scales), max(scales), 5)]
     )
@@ -225,8 +190,8 @@ def plot_attention_focus_and_sparsity(
     threshold: float,
     output_path: str,
 ) -> None:
-    focus_metrics = [np.max(w, axis=1).mean() for w in weights]
-    sparsity_metrics = [(w < threshold).mean() for w in weights]
+    focus_metrics = [calc_focus(w) for w in weights]
+    sparsity_metrics = [calc_sparsity(w, threshold) for w in weights]
 
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
@@ -241,7 +206,6 @@ def plot_attention_focus_and_sparsity(
         color=color1,
         marker="o",
         linestyle="-",
-        label="Focus",
     )
     ax1.tick_params(axis="y", labelcolor=color1)
 
@@ -255,13 +219,12 @@ def plot_attention_focus_and_sparsity(
         color=color2,
         marker="s",
         linestyle="-",
-        label="Sparsity",
     )
     ax2.tick_params(axis="y", labelcolor=color2)
     ax2.set_ylim(0, 1)
 
     lines = line1 + line2
-    labels = [line.get_label() for line in lines]
+    labels = ["Focus", "Sparsity"]
     ax1.legend(lines, labels, loc="center right", fontsize=10)
 
     plt.title(

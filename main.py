@@ -1,10 +1,17 @@
-from sdpa.experiments.api import API
+import argparse
+
+from sdpa.experiments.experiment import Experiment
 
 
 def main() -> None:
-    config_path = "sdpa.yaml"
-    api = API(config_path)
-    api.run()
+    parser = argparse.ArgumentParser(description="Run SPDA experiment")
+    parser.add_argument(
+        "config_path", type=str, help="Path to the config YAML file"
+    )
+    args = parser.parse_args()
+
+    experiment = Experiment(args.config_path)
+    experiment.run()
 
 
 if __name__ == "__main__":

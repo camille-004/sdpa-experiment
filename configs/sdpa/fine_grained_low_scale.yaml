@@ -1,0 +1,5 @@
+description: "fine_grained_low_scale"
+batch_size: 1
+seq_length: 10
+d_k: 64
+scaling_factors: [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
