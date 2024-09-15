@@ -1,16 +1,16 @@
 [tool.poetry]
-name = "hloport"
+name = "sdpa"
 version = "0.1.0"
-description = ""
+description = "Scaled Dot-Product Attention Experiment"
 authors = ["camille-004 <dunningcamille@gmail.com>"]
 readme = "README.md"
-packages = [{include = "hloport"}]
+packages = [{include = "sdpa"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 pytest = "^8.2.2"
 pytest-mock = "^3.14.0"
-jax = "^0.4.31"
+numpy = "^2.1.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.8"

@@ -14,4 +14,4 @@ type-check:
 	poetry run mypy .
 
 test:
-	poetry run pytest
+	poetry run pytest -rP
